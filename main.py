@@ -1,26 +1,9 @@
-from fastapi import FastAPI
-from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import JSONResponse
-from schemas.request import Request
-
-
+from fastapi import FastAPI , Header
+from auth.auth import decode_token
 
 app = FastAPI()
 
 
-app.add_middleware(
-    CORSMiddleware,
-    allow_origins=["*"],  # Adjust this for production!
-    allow_credentials=True,
-    allow_methods=["*"],
-    allow_headers=["*"],
-)
-
-
-
-
-
-@app.post("/get_res")
-async def get_res(req:Request):
-    print(req.message)
-    return JSONResponse(content={"message": "Hello, world!"})
+@app.post("/check")
+async def check_token(auth:str = Header()):
+    return "token {}".format(decode_token(auth))
