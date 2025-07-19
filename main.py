@@ -1,9 +1,9 @@
-from fastapi import FastAPI , Header
-from auth.auth import decode_token
+from fastapi import FastAPI
+from router import user
+
+
 
 app = FastAPI()
 
 
-@app.post("/check")
-async def check_token(auth:str = Header()):
-    return "token {}".format(decode_token(auth))
+app.include_router(user.router)

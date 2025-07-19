@@ -30,10 +30,10 @@ def create_access_token(data: dict, expires_delta: timedelta | None = None):
         
 def decode_token(token: str):
     try:
-        return jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
+        return jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM]),True
     except JWTError as e:
         print("error")
-        return {"error":"falied to decode"}
+        return {"error":"falied to decode"},False
 
 
 
@@ -62,9 +62,10 @@ if __name__ == "__main__":
     data = {"username":"dhanush","password":"somehashedpass"}
     encoded = create_access_token(data=data,expires_delta=timedelta(minutes=50))
     print(f"\n data : {data}  \n encoded to \n {encoded}\n")
-    decoded = decode_token(encoded)     # type: ignore
-    if "exp" in  decoded.keys():
+    authkey=input()
+    decoded = decode_token(authkey)     # type: ignore
+    if decoded[1]:
         print(f" decoded {decoded}")
-        print(" expires at {} ".format(datetime.fromtimestamp(decoded["exp"]))) # type: ignore
+        print(" expires at {} ".format(datetime.fromtimestamp(decoded[0]["exp"]))) # type: ignore
     else:
-        print(decoded)
+        print(decoded[0])

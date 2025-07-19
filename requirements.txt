@@ -3,3 +3,6 @@ python-multipart
 uvicorn[standard]
 pydantic
 langchain_community
+python-jose[cryptography]
+passlib[bcrypt]
+sqlmodel
