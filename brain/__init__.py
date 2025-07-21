@@ -1,1 +1,1 @@
-from Internet import get_from_web
+from .Internet import get_from_web

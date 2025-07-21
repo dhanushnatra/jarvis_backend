@@ -1,6 +1,7 @@
 from langchain_community.tools import DuckDuckGoSearchRun
 
 search = DuckDuckGoSearchRun()
+
 def get_from_web(query: str) -> str:
     """Get information from the web using DuckDuckGo.
     Args:
