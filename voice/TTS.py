@@ -17,11 +17,17 @@ class TextToSpeech:
     def speak_to_file(self, text, filename:str|Path="output.wav"):
         if isinstance(filename, Path):
             filename = filename.absolute().resolve()
-        wav_file = wave.open(str(filename), "wb")
-        self.voice.synthesize_wav(text=text,wav_file=wav_file,syn_config=self.syn_config)
-        wav_file.close()
-        
-        
+        try:
+            wav_file = wave.open(str(filename), "wb")
+            self.voice.synthesize_wav(text=text,wav_file=wav_file,syn_config=self.syn_config)
+            return True,f"voice generated at {filename}"
+        except Exception as e:
+            print(f"Error occurred while synthesizing speech: {e}")
+        finally:
+            wav_file.close()
+
 if __name__ == "__main__":
     tts = TextToSpeech()
-    tts.speak_to_file("Hello, this is a test of the text to speech synthesis.")
+    out = tts.speak_to_file("Hello, this is a test of the text to speech synthesis.",Path("output.wav"))
+    if out:
+        print(out[1])
