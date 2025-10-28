@@ -1,4 +1,4 @@
-import fasttext
+
 from pathlib import Path
 from sentence_transformers import SentenceTransformer
 from sklearn.metrics.pairwise import cosine_similarity
