@@ -17,7 +17,7 @@ def chunk_text(text, max_chars=500, overlap=50):
         start += max_chars - overlap
     return chunks
 
-def create_chunks_from_folder(input_folder:str|Path="docs",max_chars=500)->list[str]:
+def create_chunks_from_folder(input_folder:str|Path="docs",max_chars=500,chunk_overlap:int=50)->list[str]:
     final_chunks = []
     for file in os.listdir(input_folder):
         if not file.endswith(".txt"):
@@ -27,7 +27,7 @@ def create_chunks_from_folder(input_folder:str|Path="docs",max_chars=500)->list[
         
         # optional: clean text
         text = re.sub(r"\s+", " ", text)
-        chunks = chunk_text(text, max_chars=max_chars)
+        chunks = chunk_text(text, max_chars=max_chars, overlap=chunk_overlap)
         for chunk in chunks:
             final_chunks.append(chunk)
     print(len(final_chunks))
