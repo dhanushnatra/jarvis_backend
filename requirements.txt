@@ -1,0 +1,8 @@
+langchain
+langchain-ollama
+langchain-chroma
+langchain-text-splitters
+fastapi[standard]
+uvicorn[standard]
+pydantic
+python-multipart
