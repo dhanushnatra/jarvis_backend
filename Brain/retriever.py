@@ -1,61 +1,19 @@
 from pathlib import Path
 from langchain_ollama.embeddings import OllamaEmbeddings
 from langchain_chroma import Chroma
-from langchain_core.documents import Document
-from os import listdir
-from langchain_text_splitters import RecursiveCharacterTextSplitter
+from os import listdir, path
+from shutil import rmtree
 from .LLM import LLM
+from .file_ops import FileOps
+import re
 
 
-class FileOps:
-    def __init__(self,docs_path: str | Path,chunk_size:int=1000):
-        """Initialize FileOps with the path to the documents directory."""
-        if isinstance(docs_path, Path):
-            docs_path = str(docs_path.absolute().resolve())
-        
-        self.chunk_size = chunk_size
-        self.overlap = chunk_size // 10
-        self.docs_path = docs_path
-        self.files = listdir(self.docs_path)
-    
-    def read_files(self) -> tuple[list[Document], list[str]]:
-        """Read all text files in the documents directory and return them as a list of Document objects."""
-        
-        documents: list[Document] = []
-        ids: list[str] = []
 
-        # Read files and create initial Document objects
-        for file_name in self.files:
-            file_path = Path(self.docs_path) / file_name
-            # skip directories
-            if file_path.is_dir():
-                continue
 
-            try:
-                with open(file_path, "r", encoding="utf-8") as f:
-                    text = f.read()
-            except Exception:
-                # skip files we can't read as text
-                continue
-
-            # store source metadata so split chunks retain reference
-            doc = Document(page_content=text, metadata={"source": str(file_path)})
-            documents.append(doc)
-
-        # Use recursive splitter to create chunks from the documents
-        splitter = RecursiveCharacterTextSplitter(chunk_size=self.chunk_size, chunk_overlap=self.overlap)
-        if documents:
-            chunked_docs = splitter.split_documents(documents)
-        else:
-            chunked_docs = []
-
-        # build ids for each chunk (use filename-stem + index when possible)
-        for i, d in enumerate(chunked_docs):
-            src = d.metadata.get("source", "unknown")
-            stem = Path(src).stem if src != "unknown" else "doc"
-            ids.append(f"{stem}-{i}")
-
-        return chunked_docs, ids
+def is_file_ops(text:str)-> tuple[bool,dict]:
+    pattern= r'```.*?(\{[\s\S]*?\})\s*```'
+    match = re.search(pattern, text, re.DOTALL)
+    return (match is not None, eval(match.group(1)) if match else {})
 
 
 
@@ -63,12 +21,13 @@ class Retriever:
     def __init__(self,memory_path:str|Path, docs_path: str | Path,embedding_model:str="mxbai-embed-large",llm_model="llama3.2",chunk_size:int=1000):
         """Initialize the Retriever with a vector store and embedding model."""
         
+        
         if isinstance(docs_path, Path):
             docs_path = str(docs_path.absolute().resolve())
             
         if isinstance(memory_path, Path):
             memory_path = str(memory_path.absolute().resolve())
-
+            
         self.docs_path = docs_path
         self.llm = LLM(llm_model=llm_model)
         self.embedding_model = OllamaEmbeddings(model=embedding_model)
@@ -92,5 +51,24 @@ class Retriever:
         """Retrieve relevant documents from the vector store based on the query."""
         context = self.retriever.invoke(query)
         response= self.llm.get_response(context=context,query=query)
+        
+        is_file_op, return_format = is_file_ops(response)
+        print(is_file_op, return_format)
+        if is_file_op:
+            if return_format["function"] == "append_event":
+                file_path = return_format["file_path"]
+                content = return_format["content"]
+                self.file_ops.append_event(file_path=file_path, content=" "+content)
+                return f"Event added successfully. Appended to {file_path} with {content}"
+            elif return_format["function"] == "update_event":
+                file_path = return_format["file_path"]
+                old_content = return_format["old_content"]
+                new_content = return_format["new_content"]
+                self.file_ops.update_event(file_path=file_path, old_content=old_content, new_content=new_content)
+                return f"Event updated successfully. Updated {file_path} with {new_content}"
+            elif return_format["function"] == "list_files":
+                files = listdir(self.docs_path)
+                response = "Available files are:\n" + "\n".join(files)
+                return response
         self.train()
         return response
