@@ -3,6 +3,8 @@ from langchain_ollama.embeddings import OllamaEmbeddings
 from langchain_chroma import Chroma
 from os import listdir, path
 from shutil import rmtree
+
+from .Internet import search_internet
 from .LLM import LLM
 from .file_ops import FileOps
 import re
@@ -69,6 +71,11 @@ class Retriever:
             elif return_format["function"] == "list_files":
                 files = listdir(self.docs_path)
                 response = "Available files are:\n" + "\n".join(files)
+                return response
+            elif return_format["function"]=="search_internet":
+                query = return_format["query"]
+                docs = search_internet(query)
+                response = self.llm.get_response(context=docs,query=query)
                 return response
         self.train()
         return response
