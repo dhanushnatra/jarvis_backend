@@ -1,15 +1,13 @@
 from pathlib import Path
 from langchain_ollama.embeddings import OllamaEmbeddings
 from langchain_chroma import Chroma
-
-
-from .LLM import LLM
+from langchain_core.documents import Document
 from .file_ops import FileOps
 
 
 
 class Retriever:
-    def __init__(self,memory_path:str|Path, docs_path: str | Path,embedding_model:str="mxbai-embed-large",llm_model="llama3.2",chunk_size:int=1000):
+    def __init__(self,memory_path:str|Path, docs_path: str | Path,embedding_model:str="mxbai-embed-large",chunk_size:int=1000) -> None:
         """Initialize the Retriever with a vector store and embedding model."""
         
         
@@ -20,7 +18,9 @@ class Retriever:
             memory_path = str(memory_path.absolute().resolve())
             
         self.docs_path = docs_path
-        self.llm = LLM(llm_model=llm_model)
+        self.memory_path = memory_path
+        print(f"Docs Path: {self.docs_path}")
+        print(f"Memory Path: {self.memory_path}")
         self.embedding_model = OllamaEmbeddings(model=embedding_model)
         self.vector_store = Chroma(
             embedding_function=self.embedding_model,
@@ -42,8 +42,8 @@ class Retriever:
         self.vector_store.delete_collection()
         self.train()
     
-    def retrieve(self, query: str) -> str:
+    def retrieve(self, query: str) -> list[Document]:
         """Retrieve relevant documents from the vector store based on the query."""
         context = self.retriever.invoke(query)
-        response= self.llm.get_response(context=context,query=query)
-        return response
+        print(f"Retrieved context: {context}")
+        return context
